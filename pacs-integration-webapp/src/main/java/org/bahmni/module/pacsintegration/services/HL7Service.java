@@ -2,6 +2,7 @@ package org.bahmni.module.pacsintegration.services;
 
 import ca.uhn.hl7v2.model.AbstractMessage;
 import ca.uhn.hl7v2.model.DataTypeException;
+import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.model.v25.group.ORM_O01_PATIENT;
 import ca.uhn.hl7v2.model.v25.message.ORM_O01;
 import ca.uhn.hl7v2.model.v25.segment.*;
@@ -19,6 +20,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Calendar;
 
 @Component
 public class HL7Service {
@@ -60,7 +62,12 @@ public class HL7Service {
         }
         orc.getQuantityTiming(0).getPriority().setValue(order.getUrgency());
         orc.getPlacerOrderNumber().getEntityIdentifier().setValue(orderNumber);
-        orc.getFillerOrderNumber().getEntityIdentifier().setValue(orderNumber); //accession number - should be of length 16 bytes
+        orc.getFillerOrderNumber().getEntityIdentifier().setValue(orderNumber);
+        try {
+            orc.getDateTimeOfTransaction().getComponent(0).parse(getHl7DateTimeFormat().format(new Date()));
+        } catch (HL7Exception e){
+            throw new HL7MessageException("Unable to construct HL7 Message: parse of date rejected");
+        }
         orc.getEnteredBy(0).getGivenName().setValue(SENDER);
         orc.getOrderControl().setValue(NEW_ORDER);
 
@@ -116,6 +123,11 @@ public class HL7Service {
         obr.getUniversalServiceIdentifier().getText().setValue(pacsConceptSource.getName());
         obr.getReasonForStudy(0).getText().setValue(order.getCommentToFulfiller());
         obr.getCollectorSComment(0).getText().setValue(order.getConcept().getName().getName());
+        if(order.getOrderType() != null && order.getOrderType().equals("Radiology Order")){
+            obr.getDiagnosticServSectID().setValue("DX");
+        }else{
+            obr.getDiagnosticServSectID().setValue("OT");
+        }
     }
 
     private void addProviderDetails(List<OpenMRSProvider> providers, ORM_O01 message) throws DataTypeException {
@@ -129,7 +141,11 @@ public class HL7Service {
         // handle the patient PID component
         ORM_O01_PATIENT patient = message.getPATIENT();
         PID pid = patient.getPID();
-        pid.getPatientIdentifierList(0).getIDNumber().setValue(openMRSPatient.getPatientId());
+        String patientId = openMRSPatient.getPatientId();
+        if(patientId != null) {
+            patientId = patientId.replaceAll("[A-Za-z]+", "");
+        }
+        pid.getPatientIdentifierList(0).getIDNumber().setValue(patientId);
         pid.getPatientName(0).getGivenName().setValue(openMRSPatient.getPatientId());
         pid.getDateTimeOfBirth().getTime().setValue(openMRSPatient.getBirthDate());
         pid.getAdministrativeSex().setValue(openMRSPatient.getGender());
@@ -140,6 +156,10 @@ public class HL7Service {
 
     private static DateFormat getHl7DateFormat() {
         return new SimpleDateFormat("yyyyMMddHH");
+    }
+
+    private static DateFormat getHl7DateTimeFormat() {
+        return new SimpleDateFormat("yyyyMMddHHmmssSSS");
     }
 
     private MSH populateMessageHeader(MSH msh, Date dateTime, String messageType, String triggerEvent, String sendingFacility) throws DataTypeException {

@@ -82,7 +82,7 @@ public class HL7Service {
     private AbstractMessage cancelOrderMessage(OpenMRSOrder order, OpenMRSPatient openMRSPatient, List<OpenMRSProvider> providers) throws DataTypeException {
         Order previousOrder = orderRepository.findByOrderUuid(order.getPreviousOrderUuid());
         if(previousOrder == null) {
-            throw  new HL7MessageException("Unable to Cancel the Order. Previous order is not found" + order.getOrderNumber());
+            throw  new HL7MessageException("Unable to Cancel the Order. Previous order is not found " + order.getOrderNumber());
         }
         ORM_O01 message = new ORM_O01();
         addMessageHeader(order, message);

@@ -16,6 +16,9 @@ import org.bahmni.module.pacsintegration.repository.OrderTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Collections;
@@ -58,21 +61,32 @@ public class PacsIntegrationService {
     @Autowired
     private ModalityService modalityService;
 
+    private static Logger logger = LoggerFactory.getLogger(PacsIntegrationService.class);
+
     public void processEncounter(OpenMRSEncounter openMRSEncounter) throws IOException, ParseException, HL7Exception, LLPException {
         OpenMRSPatient patient = openMRSService.getPatient(openMRSEncounter.getPatientUuid());
         List<OrderType> acceptableOrderTypes = orderTypeRepository.findAll();
 
+        logger.info(openMRSEncounter.getOrders().size() + " orders found.");
         List<OpenMRSOrder> newAcceptableTestOrders = openMRSEncounter.getAcceptableTestOrders(acceptableOrderTypes);
+        logger.info(newAcceptableTestOrders.size() + " acceptable orders found.");
+        logger.info("First order number pre sort: " + newAcceptableTestOrders.get(0).getOrderNumber());
         Collections.sort(newAcceptableTestOrders, ORDER_COMP);
-        Collections.reverse(newAcceptableTestOrders);
+        logger.info("First order number post sort: " + newAcceptableTestOrders.get(0).getOrderNumber());
+        //Collections.reverse(newAcceptableTestOrders);
         for(OpenMRSOrder openMRSOrder : newAcceptableTestOrders) {
-            if(orderRepository.findByOrderUuid(openMRSOrder.getUuid()) == null) {
-                AbstractMessage request = hl7Service.createMessage(openMRSOrder, patient, openMRSEncounter.getProviders());
-                String response = modalityService.sendMessage(request, openMRSOrder.getOrderType());
-                Order order = openMRSEncounterToOrderMapper.map(openMRSOrder, openMRSEncounter, acceptableOrderTypes);
+            logger.info("Processing order " + openMRSOrder.getOrderNumber());
+            try {
+                if(orderRepository.findByOrderUuid(openMRSOrder.getUuid()) == null) {
+                    AbstractMessage request = hl7Service.createMessage(openMRSOrder, patient, openMRSEncounter.getProviders());
+                    String response = modalityService.sendMessage(request, openMRSOrder.getOrderType());
+                    Order order = openMRSEncounterToOrderMapper.map(openMRSOrder, openMRSEncounter, acceptableOrderTypes);
 
-                orderRepository.save(order);
-                orderDetailsRepository.save(new OrderDetails(order, request.encode(),response));
+                    orderRepository.save(order);
+                    orderDetailsRepository.save(new OrderDetails(order, request.encode(),response));
+                }
+            } catch( HL7Exception e) {
+                logger.warn("Failed to process order " + openMRSOrder.getOrderNumber() + " : " + e.getMessage());
             }
         }
     }

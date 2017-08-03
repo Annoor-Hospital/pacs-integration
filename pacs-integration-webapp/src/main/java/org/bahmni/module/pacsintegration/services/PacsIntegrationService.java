@@ -70,12 +70,8 @@ public class PacsIntegrationService {
         logger.info(openMRSEncounter.getOrders().size() + " orders found.");
         List<OpenMRSOrder> newAcceptableTestOrders = openMRSEncounter.getAcceptableTestOrders(acceptableOrderTypes);
         logger.info(newAcceptableTestOrders.size() + " acceptable orders found.");
-        logger.info("First order number pre sort: " + newAcceptableTestOrders.get(0).getOrderNumber());
         Collections.sort(newAcceptableTestOrders, ORDER_COMP);
-        logger.info("First order number post sort: " + newAcceptableTestOrders.get(0).getOrderNumber());
-        //Collections.reverse(newAcceptableTestOrders);
         for(OpenMRSOrder openMRSOrder : newAcceptableTestOrders) {
-            logger.info("Processing order " + openMRSOrder.getOrderNumber());
             try {
                 if(orderRepository.findByOrderUuid(openMRSOrder.getUuid()) == null) {
                     AbstractMessage request = hl7Service.createMessage(openMRSOrder, patient, openMRSEncounter.getProviders());

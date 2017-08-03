@@ -142,15 +142,12 @@ public class HL7Service {
         ORM_O01_PATIENT patient = message.getPATIENT();
         PID pid = patient.getPID();
         String patientId = openMRSPatient.getPatientId();
-        /*if(patientId != null) {
-            patientId = patientId.replaceAll("[A-Za-z]+", "");
-        }*/
         pid.getPatientIdentifierList(0).getIDNumber().setValue(patientId);
         pid.getPatientName(0).getGivenName().setValue(openMRSPatient.getPatientId());
         pid.getDateTimeOfBirth().getTime().setValue(openMRSPatient.getBirthDate());
         pid.getAdministrativeSex().setValue(openMRSPatient.getGender());
 
-        message.getORDER().getORDER_DETAIL().getOBR().getPlannedPatientTransportComment(0).getText().setValue(openMRSPatient.getGivenName()+","+openMRSPatient.getFamilyName());
+        message.getORDER().getORDER_DETAIL().getOBR().getPlannedPatientTransportComment(0).getText().setValue(openMRSPatient.getFamilyName()+"^"+openMRSPatient.getGivenName());
 
     }
 

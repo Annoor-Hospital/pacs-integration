@@ -141,13 +141,14 @@ public class HL7Service {
         // handle the patient PID component
         ORM_O01_PATIENT patient = message.getPATIENT();
         PID pid = patient.getPID();
-        String patientId = openMRSPatient.getPatientId();
-        pid.getPatientIdentifierList(0).getIDNumber().setValue(patientId);
-        pid.getPatientName(0).getGivenName().setValue(openMRSPatient.getPatientId());
+        pid.getPatientIdentifierList(0).getIDNumber().setValue(openMRSPatient.getPatientId());
+        pid.getPatientName(0).getFamilyName().getSurname().setValue(openMRSPatient.getFamilyName());
+        pid.getPatientName(0).getGivenName().setValue(openMRSPatient.getGivenName());
+        // pid.getPatientName(0).getSecondAndFurtherGivenNamesOrInitialsThereof().setValue(openMRSPatient.getMiddleName());
         pid.getDateTimeOfBirth().getTime().setValue(openMRSPatient.getBirthDate());
         pid.getAdministrativeSex().setValue(openMRSPatient.getGender());
 
-        message.getORDER().getORDER_DETAIL().getOBR().getPlannedPatientTransportComment(0).getText().setValue(openMRSPatient.getFamilyName()+"^"+openMRSPatient.getGivenName());
+        // message.getORDER().getORDER_DETAIL().getOBR().getPlannedPatientTransportComment(0).getText().setValue(openMRSPatient.getFamilyName()+"^"+openMRSPatient.getGivenName());
 
     }
 

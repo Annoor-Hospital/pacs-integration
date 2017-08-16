@@ -38,7 +38,7 @@ public class EncounterFeedWorker implements EventWorker {
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed send order to modality", e);
+            logger.error("Failed send order to modality ", e);
             throw new RuntimeException("Failed send order to modality", e);
         }
     }

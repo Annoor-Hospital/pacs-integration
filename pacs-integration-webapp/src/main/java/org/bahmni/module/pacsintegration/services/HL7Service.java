@@ -64,7 +64,7 @@ public class HL7Service {
         orc.getPlacerOrderNumber().getEntityIdentifier().setValue(orderNumber);
         orc.getFillerOrderNumber().getEntityIdentifier().setValue(orderNumber);
         try {
-            orc.getDateTimeOfTransaction().getComponent(0).parse(getHl7DateTimeFormat().format(new Date()));
+            orc.getDateTimeOfTransaction().getTime().parse(getHl7DateTimeFormat().format(new Date()));
         } catch (HL7Exception e){
             throw new HL7MessageException("Unable to construct HL7 Message: parse of date rejected");
         }
@@ -117,7 +117,7 @@ public class HL7Service {
 
         OpenMRSConceptMapping pacsConceptSource = order.getPacsConceptSource();
         if(pacsConceptSource == null) {
-            throw new HL7MessageException("Unable to create HL7 message. Missing concept source for order" + order.getUuid());
+            throw new HL7MessageException("Unable to create HL7 message. Missing concept source for order " + order.getUuid());
         }
         obr.getUniversalServiceIdentifier().getIdentifier().setValue(pacsConceptSource.getCode());
         obr.getUniversalServiceIdentifier().getText().setValue(pacsConceptSource.getName());

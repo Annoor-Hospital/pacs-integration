@@ -68,8 +68,13 @@ public class PacsIntegrationService {
         List<OrderType> acceptableOrderTypes = orderTypeRepository.findAll();
 
         logger.info(openMRSEncounter.getOrders().size() + " orders found.");
+
         List<OpenMRSOrder> newAcceptableTestOrders = openMRSEncounter.getAcceptableTestOrders(acceptableOrderTypes);
+
         logger.info(newAcceptableTestOrders.size() + " acceptable orders found.");
+
+        int succesful = 0;
+
         Collections.sort(newAcceptableTestOrders, ORDER_COMP);
         for(OpenMRSOrder openMRSOrder : newAcceptableTestOrders) {
             try {
@@ -81,10 +86,12 @@ public class PacsIntegrationService {
                     orderRepository.save(order);
                     orderDetailsRepository.save(new OrderDetails(order, request.encode(),response));
                 }
-            } catch( HL7Exception e) {
+                succesful++;
+            } catch( Exception e) {
                 logger.warn("Failed to process order " + openMRSOrder.getOrderNumber() + " : " + e.getMessage());
             }
         }
+        logger.info(succesful + " orders succeeded.");
     }
 
 }

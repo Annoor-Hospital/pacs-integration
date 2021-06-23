@@ -43,7 +43,7 @@
                 </configuration>
             </plugin>
         </plugins>
-        <finalName>${parent.artifactId}</finalName>
+        <finalName>${project.parent.artifactId}</finalName>
     </build>
 
     <artifactId>pacs-integration-webapp</artifactId>

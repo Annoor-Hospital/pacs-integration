@@ -12,8 +12,11 @@
         </RollingFile>
     </appenders>
     <loggers>
-        <root level="INFO">
+        <root level="WARN">
             <appenderref ref="MyRollingFile"/>
         </root>
+        <Logger name="org.bahmni.module.pacsintegration" level="INFO" additivity="false">
+            <appenderref ref="MyRollingFile"/>
+        </Logger>
     </loggers>
 </configuration>

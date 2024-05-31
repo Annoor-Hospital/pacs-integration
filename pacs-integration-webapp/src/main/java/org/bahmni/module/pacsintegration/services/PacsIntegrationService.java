@@ -66,12 +66,9 @@ public class PacsIntegrationService {
     public void processEncounter(OpenMRSEncounter openMRSEncounter) throws IOException, ParseException, HL7Exception, LLPException {
         OpenMRSPatient patient = openMRSService.getPatient(openMRSEncounter.getPatientUuid());
         List<OrderType> acceptableOrderTypes = orderTypeRepository.findAll();
-
-        logger.info(openMRSEncounter.getOrders().size() + " orders found.");
-
         List<OpenMRSOrder> newAcceptableTestOrders = openMRSEncounter.getAcceptableTestOrders(acceptableOrderTypes);
 
-        logger.info(newAcceptableTestOrders.size() + " acceptable orders found.");
+        logger.info("Found " + openMRSEncounter.getOrders().size() + " orders and " + newAcceptableTestOrders.size() + " acceptable orders.");
 
         int succesful = 0;
 
@@ -80,12 +77,15 @@ public class PacsIntegrationService {
             try {
                 if(orderRepository.findByOrderUuid(openMRSOrder.getUuid()) == null) {
                     AbstractMessage request = hl7Service.createMessage(openMRSOrder, patient, openMRSEncounter.getProviders());
+                    logger.info("Sending message: " + request.toString());
                     String response = modalityService.sendMessage(request, openMRSOrder.getOrderType());
                     Order order = openMRSEncounterToOrderMapper.map(openMRSOrder, openMRSEncounter, acceptableOrderTypes);
-
                     orderRepository.save(order);
                     orderDetailsRepository.save(new OrderDetails(order, request.encode(),response));
+                }else{
+                    logger.info("Couldn't find order.");
                 }
+                logger.info("Done.");
                 succesful++;
             } catch( Exception e) {
                 logger.warn("Failed to process order " + openMRSOrder.getOrderNumber() + " : " + e.getMessage());

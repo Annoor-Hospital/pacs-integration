@@ -30,8 +30,8 @@ public class EncounterFeedWorker implements EventWorker {
         String bedAssignment = "Bed-Assignment";
         try {
             if(event.getTitle() == null || !event.getTitle().equals(bedAssignment)) {
-                logger.info("Getting encounter data...");
                 String encounterUri = event.getContent();
+                logger.info("Getting encounter data for " + encounterUri);
                 OpenMRSEncounter encounter = openMRSService.getEncounter(encounterUri);
                 if(encounter.hasOrders()) {
                     pacsIntegrationService.processEncounter(encounter);

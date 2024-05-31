@@ -68,30 +68,30 @@ public class PacsIntegrationService {
         List<OrderType> acceptableOrderTypes = orderTypeRepository.findAll();
         List<OpenMRSOrder> newAcceptableTestOrders = openMRSEncounter.getAcceptableTestOrders(acceptableOrderTypes);
 
-        logger.info("Found " + openMRSEncounter.getOrders().size() + " orders and " + newAcceptableTestOrders.size() + " acceptable orders.");
+        logger.debug("Encounter contained " + openMRSEncounter.getOrders().size() + " orders and " + newAcceptableTestOrders.size() + " acceptable orders.");
 
         int succesful = 0;
 
         Collections.sort(newAcceptableTestOrders, ORDER_COMP);
         for(OpenMRSOrder openMRSOrder : newAcceptableTestOrders) {
+            logger.info("Processing order " + openMRSOrder.getUuid());
             try {
                 if(orderRepository.findByOrderUuid(openMRSOrder.getUuid()) == null) {
                     AbstractMessage request = hl7Service.createMessage(openMRSOrder, patient, openMRSEncounter.getProviders());
-                    logger.info("Sending message: " + request.toString());
                     String response = modalityService.sendMessage(request, openMRSOrder.getOrderType());
                     Order order = openMRSEncounterToOrderMapper.map(openMRSOrder, openMRSEncounter, acceptableOrderTypes);
                     orderRepository.save(order);
                     orderDetailsRepository.save(new OrderDetails(order, request.encode(),response));
+                    logger.info("Order sent to modality and marked as processed: " + order.getOrderUuid());
                 }else{
-                    logger.info("Couldn't find order.");
+                    logger.info("Order already processed.");
                 }
-                logger.info("Done.");
                 succesful++;
             } catch( Exception e) {
                 logger.warn("Failed to process order " + openMRSOrder.getOrderNumber() + " : " + e.getMessage());
             }
         }
-        logger.info(succesful + " orders succeeded.");
+        logger.debug(succesful + " orders in encounter succeeded.");
     }
 
 }

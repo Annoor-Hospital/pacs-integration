@@ -35,8 +35,8 @@ public class EncounterFailedFeedJob implements FeedJob {
         if(atomFeedClient == null){
             atomFeedClient = atomFeedClientFactory.get(OPENMRS_ENCOUNTER_FEED_NAME, encounterFeedWorker);
         }
-        logger.info("Processing failed event.");
+        logger.debug("Processing failed events for " + atomFeedClient.toString()); 
         atomFeedClient.processFailedEvents();
-        logger.info("Completed processing failed event.");
+        logger.debug("Completed processing failed events.");
     }
 }
